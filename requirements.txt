@@ -1,3 +1,4 @@
+beautifulsoup4==4.9.3
 blis==0.7.4
 catalogue==2.0.4
 certifi==2020.12.5
@@ -17,6 +18,7 @@ pyparsing==2.4.7
 requests==2.25.1
 schedule==1.1.0
 smart-open==3.0.0
+soupsieve==2.2.1
 spacy==3.0.6
 spacy-legacy==3.0.5
 srsly==2.4.1
