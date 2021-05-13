@@ -1,4 +1,4 @@
-import schedule
+# import schedule
 import time
 
 from .extraction import execute as execute_extraction
