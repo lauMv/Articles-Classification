@@ -42,7 +42,10 @@ def __download_article(title, article):
     print("Guardando artículo en {}".format(path))
     article_file = open(path, "a+")
     for paragraph in article:
-        article_file.write(paragraph + "\n")
+        if paragraph is not None:
+            article_file.write(paragraph + "\n")
+        else:
+            continue
     article_file.close()
 
 
@@ -73,7 +76,10 @@ def __extract_los_tiempos(page):
                 title_article = article_page.title.text
                 file_name = __get_file_name_los_tiempos(date_div, title_article) + ".txt"
                 article_text = [article.get_text().strip() for article in article_div]
-                __download_article(file_name, article_text)
+                if os.path.exists(file_name):
+                    pass
+                else:
+                    __download_article(file_name, article_text)
             else:
                 pass
         print("Done")
@@ -156,5 +162,5 @@ def __extract_text(base_url):
         __extract_los_tiempos(page)
     elif base_url == "https://www.opinion.com.bo/blog/section/cochabamba":
         __extract_opinion(page)
-    elif base_url == "https://www.la-razon.com/sociedad/":
+    elif base_url == "https://www.la-razon.com/nacional/":
         __extract_la_razon(page)
