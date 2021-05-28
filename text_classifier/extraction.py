@@ -6,7 +6,7 @@ from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 
-LOS_TIEMPOS_BASE_URL = "https://www.lostiempos.com/"
+LOS_TIEMPOS_BASE_URL = "https://www.lostiempos.com/actualidad/cochabamba"
 OPINION_BASE_URL = "https://www.opinion.com.bo/blog/section/cochabamba"
 LA_RAZON_BASE_URL = "https://www.la-razon.com/nacional/"
 
@@ -38,7 +38,7 @@ def __remove_punctuation(text):
 
 
 def __download_article(title, article):
-    path = os.getenv("TEXT_CLASSIFIER_DATA") + title
+    path = os.getenv("TEXT_CLASSIFIER_DATA") + "articles\\" + title
     print("Guardando artículo en {}".format(path))
     article_file = open(path, "a+")
     for paragraph in article:
