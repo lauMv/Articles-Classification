@@ -10,8 +10,9 @@ def execute():
 
 
 def clean_articles():
-    files = os.listdir(os.getenv("TEXT_CLASSIFIER_DATA") + "articles\\")
-    path = os.getenv("TEXT_CLASSIFIER_DATA") + "articles\\"
+    files = os.listdir(os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "articles"))
+    path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", "")
+    print(path)
     for file in files:
         article_file = open(path + file, "r")
         article = str(article_file.read())
@@ -29,11 +30,11 @@ def clean_text(text):
 
 
 def save_cleaned_article(name, clean_article):
-    path_ = os.getenv("TEXT_CLASSIFIER_DATA") + "cleaned_articles\\" + "cleaned " + name
+    name_ = "cleaned " + name
+    path_ = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "cleaned_articles", name_)
     if not os.path.exists(path_):
         print("Guardando artículo limpio en {}".format(path_))
         file = open(path_, "a+")
         text = " ".join(clean_article)
         file.write(text)
         file.close()
-    print("Done")

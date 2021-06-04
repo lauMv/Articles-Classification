@@ -38,7 +38,7 @@ def __remove_punctuation(text):
 
 
 def __download_article(title, article):
-    path = os.getenv("TEXT_CLASSIFIER_DATA") + "articles\\" + title
+    path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", title)
     print("Guardando artículo en {}".format(path))
     article_file = open(path, "a+")
     for paragraph in article:
@@ -61,25 +61,41 @@ def __extract_los_tiempos(page):
         article_date = [date.text for date in date_div]
         match = re.search(r'\d{2}/\d{2}/\d{4}', article_date[0])
         date = datetime.strptime(match.group(), '%d/%m/%Y')
-        date_str = date.strftime("%d %b %Y ")
-        article_title = (date_str + title_article)
-        article_title = __remove_punctuation(article_title)
+        if datetime.now().day == date.day and datetime.now().month == date.month:
+            date_str = date.strftime("%d %b %Y ")
+            article_title = (date_str + title_article)
+            article_title = __remove_punctuation(article_title)
+        else:
+            article_title = ""
         return article_title
+
+    def __get_article_category_los_tiempos(link):
+        link = link.split('/')
+        categories = ["pais", "cochabamba"]
+        cat = []
+        [cat.append(word) for word in link if word in categories]
+        if len(cat) > 0:
+            return True
+        else:
+            return False
 
     def __get_articles_los_tiempos(articles_links):
         for link in articles_links:
-            response = requests.get("https://www.lostiempos.com" + link)
-            article_page = BeautifulSoup(response.text, "html.parser")
-            article_div = article_page.body.find_all(name="p", attrs={"class": "rtejustify"})
-            date_div = article_page.body.find_all(name="div", attrs={"class": "date-publish"})
-            if len(date_div) > 0:
-                title_article = article_page.title.text
-                file_name = __get_file_name_los_tiempos(date_div, title_article) + ".txt"
-                article_text = [article.get_text().strip() for article in article_div]
-                if os.path.exists(file_name):
-                    pass
+            if __get_article_category_los_tiempos(link):
+                response = requests.get("https://www.lostiempos.com" + link)
+                article_page = BeautifulSoup(response.text, "html.parser")
+                article_div = article_page.body.find_all(name="p", attrs={"class": "rtejustify"})
+                date_div = article_page.body.find_all(name="div", attrs={"class": "date-publish"})
+                if len(date_div) > 0:
+                    title_article = article_page.title.text
+                    file_name = __get_file_name_los_tiempos(date_div, title_article) + ".txt"
+                    article_text = [article.get_text().strip() for article in article_div]
+                    if os.path.exists(file_name) or file_name != "":
+                        pass
+                    else:
+                        __download_article(file_name, article_text)
                 else:
-                    __download_article(file_name, article_text)
+                    pass
             else:
                 pass
         print("Done")
@@ -97,6 +113,9 @@ def __extract_opinion(page):
 
     def __get_file_name_opinion(date_div, title_article):
         article_date = [date.text for date in date_div]
+        # date = __remove_punctuation(article_date[0])
+        # date = datetime.strptime(date, ' %d de %m de %Y (%H:%M h.) ')
+        # print(date)
         article_title = (article_date[0] + title_article)
         article_title = __remove_punctuation(article_title)
         return article_title
@@ -110,7 +129,11 @@ def __extract_opinion(page):
             title_article = article_page.title.text
             file_name = __get_file_name_opinion(date_div, title_article) + ".txt"
             article_text = [article.get_text().strip() for article in article_div]
-            __download_article(file_name, article_text)
+            if os.path.exists(file_name):
+                pass
+            else:
+                pass
+                # __download_article(file_name, article_text)
         print("Done")
 
     articles_divs = __get_divs_opinion(page)
@@ -135,19 +158,39 @@ def __extract_la_razon(page):
         match = re.search(r'\d{4}/\d{2}/\d{2}', date_div)
         date = datetime.strptime(match.group(), '%Y/%m/%d')
         date_str = date.strftime("%d %b %Y ")
-        article_title = (date_str + title_article)
-        article_title = __remove_punctuation(article_title)
+        if datetime.now().day == date.day and datetime.now().month == date.month:
+            article_title = (date_str + title_article)
+            article_title = __remove_punctuation(article_title)
+        else:
+            article_title = ""
         return article_title
+
+    def __get_article_category_la_razon(link):
+        link = link.split('/')
+        categories = ["nacional", "sociedad"]
+        cat = []
+        [cat.append(word) for word in link if word in categories]
+        if len(cat) > 0:
+            return True
+        else:
+            return False
 
     def __get_articles_la_razon(articles_links):
         for link in articles_links:
-            response = requests.get(link)
-            article_page = BeautifulSoup(response.text, "html.parser")
-            article_div = article_page.body.find_all(name="div", attrs={"class": "article-body"})
-            article_text = [article.get_text().strip() for article in article_div]
-            title_article = article_page.title.text
-            file_name = __get_file_name_la_razon(link, title_article) + ".txt"
-            __download_article(file_name, article_text)
+            if __get_article_category_la_razon(link):
+                response = requests.get(link)
+                article_page = BeautifulSoup(response.text, "html.parser")
+                article_div = article_page.body.find_all(name="div", attrs={"class": "article-body"})
+                article_text = [article.get_text().strip() for article in article_div]
+                title_article = article_page.title.text
+                file_name = __get_file_name_la_razon(link, title_article) + ".txt"
+                if os.path.exists(file_name) or file_name != "":
+                    pass
+                else:
+                    pass
+                    __download_article(file_name, article_text)
+            else:
+                pass
         print("Done")
 
     articles_divs = __get_divs_la_razon(page)
@@ -158,7 +201,7 @@ def __extract_la_razon(page):
 def __extract_text(base_url):
     response = requests.get(base_url)
     page = BeautifulSoup(response.text, "html.parser")
-    if base_url == "https://www.lostiempos.com/":
+    if base_url == "https://www.lostiempos.com/actualidad/cochabamba":
         __extract_los_tiempos(page)
     elif base_url == "https://www.opinion.com.bo/blog/section/cochabamba":
         __extract_opinion(page)
