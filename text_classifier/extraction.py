@@ -76,11 +76,11 @@ def __extract_los_tiempos(page):
 
     def build_validation_function_for_los_tiempos():
         los_tiempos_pattern = re.compile(r"^/actualidad/(cochabamba|pais)/(?P<date>\d{8})")
-        los_tiempos_matching_date_str = datetime.today().strftime('%Y%m%d')
+        los_tiempos_date_str = datetime.today().strftime('%Y%m%d')
 
         def is_valid_for_los_tiempos(link):
             regex_match = los_tiempos_pattern.search(link)
-            return (regex_match is not None) and (regex_match.group('date') == los_tiempos_matching_date_str)
+            return (regex_match is not None) and (regex_match.group('date') == los_tiempos_date_str)
 
         return is_valid_for_los_tiempos
 
