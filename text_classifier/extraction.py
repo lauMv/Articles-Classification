@@ -19,18 +19,23 @@ def execute():
 
 
 def __div_links(articles_divs):
-    div_links = []
-    for article in articles_divs:
-        div_links.append(article.find("a"))
-    return div_links
+    return [article.find("a") for article in articles_divs]
+    #FIXME No es necesario usar for!!
+    # for article in articles_divs:
+    #     div_links.append(article.find("a"))
+    # return div_links
 
 
-def __get_links(articles_divs):
-    links = []
-    for div_link in __div_links(articles_divs):
-        link = div_link.get("href")
-        links.append(link)
-    return links
+def __get_links(articles_divs, is_valid):
+    links = [link.get("href") for link in __div_links(articles_divs)]
+    return [link for link in links if is_valid(link)]
+    # FIXME No es necesario usar for!!
+    # for div_link in __div_links(articles_divs):
+    #     link = div_link.get("href")
+    #     links.append(link)
+    #     # if is_valid_for_los_tiempos(link):
+    #     #     links.append(link)
+    # return links
 
 
 def __remove_punctuation(text):
@@ -69,6 +74,17 @@ def __extract_los_tiempos(page):
             article_title = ""
         return article_title
 
+    def build_validation_function_for_los_tiempos():
+        los_tiempos_pattern = re.compile(r"^/actualidad/(cochabamba|pais)/(?P<date>\d{8})")
+        matching_date_str = datetime.today().strftime('%Y%m%d')
+
+        def is_valid_for_los_tiempos(link):
+            regex_match = los_tiempos_pattern.search(link)
+            return (regex_match is not None) and (regex_match.group('date') == matching_date_str)
+
+        return is_valid_for_los_tiempos
+
+    #FIXME Quitar este función
     def __get_article_category_los_tiempos(link):
         link = link.split('/')
         categories = ["pais", "cochabamba"]
@@ -79,6 +95,7 @@ def __extract_los_tiempos(page):
         else:
             return False
 
+    # FIXME Cambiar esta función (sólo debe guardar el artículo)
     def __get_articles_los_tiempos(articles_links):
         for link in articles_links:
             if __get_article_category_los_tiempos(link):
@@ -101,7 +118,7 @@ def __extract_los_tiempos(page):
         print("Done")
 
     articles_divs = __get_divs_los_tiempos(page)
-    links = __get_links(articles_divs)
+    links = __get_links(articles_divs, build_validation_function_for_los_tiempos())
     __get_articles_los_tiempos(links)
 
 
@@ -207,3 +224,7 @@ def __extract_text(base_url):
         __extract_opinion(page)
     elif base_url == "https://www.la-razon.com/nacional/":
         __extract_la_razon(page)
+
+
+if __name__ == "__main__":
+    execute()
