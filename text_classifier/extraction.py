@@ -76,11 +76,11 @@ def __extract_los_tiempos(page):
 
     def build_validation_function_for_los_tiempos():
         los_tiempos_pattern = re.compile(r"^/actualidad/(cochabamba|pais)/(?P<date>\d{8})")
-        matching_date_str = datetime.today().strftime('%Y%m%d')
+        los_tiempos_matching_date_str = datetime.today().strftime('%Y%m%d')
 
         def is_valid_for_los_tiempos(link):
             regex_match = los_tiempos_pattern.search(link)
-            return (regex_match is not None) and (regex_match.group('date') == matching_date_str)
+            return (regex_match is not None) and (regex_match.group('date') == los_tiempos_matching_date_str)
 
         return is_valid_for_los_tiempos
 
@@ -95,7 +95,7 @@ def __extract_los_tiempos(page):
         else:
             return False
 
-    # FIXME Cambiar esta función (sólo debe guardar el artículo)
+    # FIXME Cambiar esta función luego de quitar __get_article_category_los_tiempos
     def __get_articles_los_tiempos(articles_links):
         for link in articles_links:
             if __get_article_category_los_tiempos(link):
