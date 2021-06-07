@@ -7,7 +7,7 @@ from .pre_processing import execute as execute_preprocessing
 
 def main():
     execute_extraction()
-    execute_preprocessing()
+    # execute_preprocessing()
 
 
 print("Iniciando main()")
