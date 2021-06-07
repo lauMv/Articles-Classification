@@ -13,8 +13,8 @@ LA_RAZON_BASE_URL = "https://www.la-razon.com/nacional/"
 
 def execute():
     print("Iniciando el proceso de extracción en {}".format(os.getenv("TEXT_CLASSIFIER_DATA")))
-    # __extract_text(LOS_TIEMPOS_BASE_URL)
-    # __extract_text(OPINION_BASE_URL)
+    __extract_text(LOS_TIEMPOS_BASE_URL)
+    __extract_text(OPINION_BASE_URL)
     __extract_text(LA_RAZON_BASE_URL)
 
 
@@ -36,9 +36,11 @@ def __download_article(title, article):
     print("Guardando artículo en {}".format(path))
     article_file = open(path, "a+")
     for paragraph in article:
-        if paragraph is not None:
-            article_file.write(paragraph + "\n")
-        else:
+        try:
+            if paragraph is not None:
+                article_file.write(paragraph)
+                article_file.write("\n")
+        except:
             continue
     article_file.close()
 
@@ -136,7 +138,6 @@ def __extract_la_razon(page):
 
     def __get_links_la_razon(article_divs, is_valid):
         article_links = [article.get("href") for article in article_divs]
-        print(article_links[0])
         return [link for link in article_links if is_valid(link)]
 
     def __get_file_name_la_razon(date_div, title_article):
@@ -151,12 +152,12 @@ def __extract_la_razon(page):
         return article_title
 
     def build_validation_function_for_la_razon():
-        la_razon_pattern = re.compile(r"^https://www.la-razon.com/nacional/(?P<date>\d{10})")
-        la_razon_date_str = datetime.today().strftime('%Y%m%d')
+        la_razon_pattern = re.compile(r"^https://www\.la-razon\.com/nacional/(?P<date>\d{4}/\d{2}/\d{2})")
+        la_razon_date_str = datetime.today().strftime('%Y/%m/%d')
 
         def is_valid_for_la_razon(link):
             regex_match = la_razon_pattern.search(link)
-            return (regex_match is not None) and (__remove_punctuation(regex_match.group('date')) == la_razon_date_str)
+            return (regex_match is not None) and (regex_match.group('date') == la_razon_date_str)
 
         return is_valid_for_la_razon
 
