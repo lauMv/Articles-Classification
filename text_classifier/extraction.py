@@ -34,15 +34,14 @@ def __remove_punctuation(text):
 def __download_article(title, article):
     path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", title)
     print("Guardando artículo en {}".format(path))
-    article_file = open(path, "a+")
-    for paragraph in article:
-        try:
-            if paragraph is not None:
-                article_file.write(paragraph)
-                article_file.write("\n")
-        except:
-            continue
-    article_file.close()
+    with open(path, "a+", encoding="utf-8") as article_file:
+        for paragraph in article:
+            try:
+                if paragraph is not None:
+                    article_file.write(paragraph)
+                    article_file.write("\n")
+            except:
+                continue
 
 
 def __extract_los_tiempos(page):
@@ -87,7 +86,7 @@ def __extract_los_tiempos(page):
 
     articles_divs = __get_divs_los_tiempos(page)
     links = __get_links(articles_divs, build_validation_function_for_los_tiempos())
-    __get_articles_los_tiempos(links)
+    __get_articles_los_tiempos(links[:1])
 
 
 def __extract_opinion(page):
@@ -184,9 +183,11 @@ def __extract_text(base_url):
     if base_url == "https://www.lostiempos.com/actualidad/cochabamba":
         __extract_los_tiempos(page)
     elif base_url == "https://www.opinion.com.bo/blog/section/cochabamba/":
-        __extract_opinion(page)
+        pass
+        # __extract_opinion(page)
     elif base_url == "https://www.la-razon.com/nacional/":
-        __extract_la_razon(page)
+        pass
+        # __extract_la_razon(page)
 
 
 if __name__ == "__main__":
