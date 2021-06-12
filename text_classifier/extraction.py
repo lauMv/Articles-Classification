@@ -33,15 +33,15 @@ def __remove_punctuation(text):
 
 def __download_article(title, article):
     path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", title)
-    print("Guardando artículo en {}".format(path))
-    with open(path, "a+", encoding="utf-8") as article_file:
-        for paragraph in article:
-            try:
-                if paragraph is not None:
-                    article_file.write(paragraph)
-                    article_file.write("\n")
-            except:
-                continue
+    if not os.path.exists(path):
+        print("Guardando artículo en {}".format(path))
+        with open(path, "a+", encoding="utf-8") as article_file:
+            for paragraph in article:
+                try:
+                    if paragraph is not None:
+                        article_file.write(paragraph)
+                except:
+                    continue
 
 
 def __extract_los_tiempos(page):
@@ -80,8 +80,7 @@ def __extract_los_tiempos(page):
             title_article = article_page.title.text
             file_name = __get_file_name_los_tiempos(date_div, title_article) + ".txt"
             article_text = [article.get_text().strip() for article in article_div]
-            if not os.path.exists(file_name):
-                __download_article(file_name, article_text)
+            __download_article(file_name, article_text)
         print("Done")
 
     articles_divs = __get_divs_los_tiempos(page)
@@ -183,11 +182,9 @@ def __extract_text(base_url):
     if base_url == "https://www.lostiempos.com/actualidad/cochabamba":
         __extract_los_tiempos(page)
     elif base_url == "https://www.opinion.com.bo/blog/section/cochabamba/":
-        pass
-        # __extract_opinion(page)
+        __extract_opinion(page)
     elif base_url == "https://www.la-razon.com/nacional/":
-        pass
-        # __extract_la_razon(page)
+        __extract_la_razon(page)
 
 
 if __name__ == "__main__":
