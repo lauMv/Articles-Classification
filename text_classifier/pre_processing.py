@@ -36,7 +36,7 @@ def save_cleaned_article(name, clean_article):
     path_ = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "cleaned_articles", name_)
     if not os.path.exists(path_):
         print("Guardando artículo limpio en {}".format(path_))
-        file = open(path_, "a+", encoding="utf-8")
-        text = " ".join(clean_article)
-        file.write(text)
-        file.close()
+        with open(path_, "a+", encoding="utf-8") as file:
+            text = " ".join(clean_article)
+            file.write(text)
+            file.close()

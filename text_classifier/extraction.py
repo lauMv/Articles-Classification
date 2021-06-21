@@ -12,9 +12,11 @@ LA_RAZON_BASE_URL = "https://www.la-razon.com/nacional/"
 
 
 def execute():
-    print("Iniciando el proceso de extracción en {}".format(os.getenv("TEXT_CLASSIFIER_DATA")))
+    print("Iniciando el proceso de extracción de Los Tiempos en {}".format(os.getenv("TEXT_CLASSIFIER_DATA")))
     __extract_text(LOS_TIEMPOS_BASE_URL)
+    print("Iniciando el proceso de extracción de Opinion en {}".format(os.getenv("TEXT_CLASSIFIER_DATA")))
     __extract_text(OPINION_BASE_URL)
+    print("Iniciando el proceso de extracción de La Razon en {}".format(os.getenv("TEXT_CLASSIFIER_DATA")))
     __extract_text(LA_RAZON_BASE_URL)
 
 
@@ -125,7 +127,7 @@ def __extract_opinion(page):
 
     articles_divs = __get_divs_opinion(page)
     links = __get_links(articles_divs, build_validation_function_for_opinion())
-    __get_articles_opinion(links)
+    __get_articles_opinion(links[:1])
 
 
 def __extract_la_razon(page):
@@ -173,7 +175,7 @@ def __extract_la_razon(page):
 
     articles_divs = __get_divs_la_razon(page)
     links = __get_links_la_razon(articles_divs, build_validation_function_for_la_razon())
-    __get_articles_la_razon(links)
+    __get_articles_la_razon(links[:1])
 
 
 def __extract_text(base_url):
