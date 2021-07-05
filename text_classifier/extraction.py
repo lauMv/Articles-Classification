@@ -1,7 +1,8 @@
 import os
 import re
 import string
-from datetime import datetime, timedelta
+from datetime import datetime
+from repository import db
 
 import requests
 from bs4 import BeautifulSoup
@@ -12,6 +13,7 @@ LA_RAZON_BASE_URL = "https://www.la-razon.com/nacional/"
 
 
 def execute():
+
     print("Iniciando el proceso de extracción de Los Tiempos en {}".format(os.getenv("TEXT_CLASSIFIER_DATA")))
     __extract_text(LOS_TIEMPOS_BASE_URL)
     print("Iniciando el proceso de extracción de Opinion en {}".format(os.getenv("TEXT_CLASSIFIER_DATA")))

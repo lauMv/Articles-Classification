@@ -2,5 +2,6 @@
 ./venv
 .DS_Store
 **/__pycache__
+*.db
 ./articles
 ./cleaned_articles
