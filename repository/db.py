@@ -5,6 +5,7 @@ import os
 
 def init_db():
     connection = jaydebeapi.connect(_driver_class, _jdbc_url, _credentials, _h2_jar)
+    #TODO incluir la aquí la inicialización del esquema de la BD
     connection.close()
 
 
