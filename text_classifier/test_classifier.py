@@ -20,6 +20,7 @@ count_vectorizer = CountVectorizer(encoding='utf-8', max_df=1.0, min_df=1, max_f
                                    binary=False).fit(pre_processes_docs)
 
 pre_processes_docs_vectors = count_vectorizer.transform(pre_processes_docs)
+print(pre_processes_docs_vectors.shape)
 
 clf = LogisticRegression()
 clf.fit(pre_processes_docs_vectors.toarray(), pre_processes_docs_class)
