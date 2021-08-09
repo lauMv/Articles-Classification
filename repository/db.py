@@ -1,8 +1,8 @@
 import jaydebeapi
 from pathlib import Path
 import os
-# from articles_schema import ArticleSchema
-from repository import  articles_schema as ArticleSchema
+# from repository import articles_schema as ArticleSchema
+import articles_schema as ArticleSchema
 
 _driver_class = "org.h2.Driver"
 _jdbc_url = "jdbc:h2:tcp://localhost:5234/articles_classification"
@@ -13,7 +13,6 @@ _h2_jar = str(os.path.join(Path(__file__).absolute().parents[1], "h2", "bin", "h
 def init_db():
     _execute(
         ("CREATE TABLE IF NOT EXISTS articles ("
-            "  id INT PRIMARY KEY AUTO_INCREMENT,"
             "  source_file_path VARCHAR NOT NULL,"
             "  pre_processed_file_path VARCHAR NOT NULL,"
             "  extraction_date VARCHAR NOT NULL,"
@@ -25,38 +24,41 @@ def get_all():
     return _execute("SELECT * FROM articles", returnResult=True)
 
 
-def get(Id):
-    return _execute("SELECT * FROM articles WHERE id = {}".format(Id), returnResult=True)
+def get(source_file_path):
+    return _execute("SELECT * FROM articles WHERE source_file_path = {}".format(source_file_path), returnResult=True)
 
 
-def create(articles):
-    count = _execute("SELECT count(*) AS count FROM articles WHERE source_file_path LIKE '{}'".format(articles.get("source_file_path")),
+def create(article):
+    count = _execute("SELECT count(*) AS count FROM articles WHERE source_file_path LIKE '{}'".format(article.get("source_file_path")),
                      returnResult=True)
+
     if count[0]["count"] > 0:
         return
 
-    columns = ", ".join(articles.keys())
-    values = ", ".join("'{}'".format(value) for value in articles.values())
+    columns = ", ".join(article.keys())
+    values = ", ".join("'{}'".format(value) for value in article.values())
     _execute("INSERT INTO article ({}) VALUES({})".format(columns, values))
 
     return {}
 
 
-def update(articles, Id):
-    count = _execute("SELECT count(*) AS count FROM articles WHERE id = {}".format(Id), returnResult=True)
+def update(articles, source_file_path):
+    count = _execute("SELECT count(*) AS count FROM articles WHERE source_file_path = {}".format(source_file_path),
+                     returnResult=True)
     if count[0]["count"] == 0:
         return
     values = ["'{}'".format(value) for value in articles.values()]
     update_values = ", ".join("{} = {}".format(key, value) for key, value in zip(articles.keys(), values))
-    _execute("UPDATE articles SET {} WHERE id = {}".format(update_values, Id))
+    _execute("UPDATE articles SET {} WHERE source_file_path = {}".format(update_values, source_file_path))
     return {}
 
 
-def delete(Id):
-    count = _execute("SELECT count(*) AS count FROM articles WHERE id = {}".format(Id), returnResult=True)
+def delete(source_file_path):
+    count = _execute("SELECT count(*) AS count FROM articles WHERE source_file_path = {}".format(source_file_path),
+                     returnResult=True)
     if count[0]["count"] == 0:
         return
-    _execute("DELETE FROM articles WHERE id = {}".format(Id))
+    _execute("DELETE FROM articles WHERE source_file_path = {}".format(source_file_path))
     return {}
 
 
@@ -641,6 +643,7 @@ articles_data = [
         "user_classification": "None, 0, 1",
         "model_classification": "None, 0, 1"
     }]
+
 if __name__ == '__main__':
     init_db()
     schema = ArticleSchema(many=True)
