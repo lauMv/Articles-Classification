@@ -13,8 +13,10 @@ LA_RAZON_BASE_URL = "https://www.la-razon.com/nacional/"
 
 def execute():
 
+    # FIXME esto no debería ser un for? Es decir, se puede armar una lista
+    #  [LOS_TIEMPOS_BASE_URL, OPINION_BASE_URL, LA_RAZON_BASE_URL] y llamar a __extract_text en un for
     print("Iniciando el proceso de extracción de Los Tiempos en {}".format(os.getenv("TEXT_CLASSIFIER_DATA")))
-    # __extract_text(LOS_TIEMPOS_BASE_URL)
+    # __extract_text(LOS_TIEMPOS_BASE_URL)      # FIXME por qué está comentado?
     print("Iniciando el proceso de extracción de Opinion en {}".format(os.getenv("TEXT_CLASSIFIER_DATA")))
     __extract_text(OPINION_BASE_URL)
     print("Iniciando el proceso de extracción de La Razon en {}".format(os.getenv("TEXT_CLASSIFIER_DATA")))
@@ -86,7 +88,7 @@ def __extract_los_tiempos(page):
 
     articles_divs = __get_divs_los_tiempos(page)
     links = __get_links(articles_divs, build_validation_function_for_los_tiempos())
-    __get_articles_los_tiempos(links[:1])
+    __get_articles_los_tiempos(links[:1])   # FIXME por qué solo se extrae el primer artículo?
 
 
 def __extract_opinion(page):
@@ -127,7 +129,7 @@ def __extract_opinion(page):
 
     articles_divs = __get_divs_opinion(page)
     links = __get_links(articles_divs, build_validation_function_for_opinion())
-    __get_articles_opinion(links[:1])
+    __get_articles_opinion(links[:1])   # FIXME por qué solo se extrae el primer artículo?
 
 
 def __extract_la_razon(page):
@@ -172,12 +174,13 @@ def __extract_la_razon(page):
 
     articles_divs = __get_divs_la_razon(page)
     links = __get_links_la_razon(articles_divs, build_validation_function_for_la_razon())
-    __get_articles_la_razon(links[:1])
+    __get_articles_la_razon(links[:1])  # FIXME por qué solo se extrae el primer artículo?
 
 
 def __extract_text(base_url):
     response = requests.get(base_url)
     page = BeautifulSoup(response.text, "html.parser")
+    # FIXME por qué no se usan las contantes LOS_TIEMPOS_BASE_URL, OPINION_BASE_URL, LA_RAZON_BASE_URL?
     if base_url == "https://www.lostiempos.com/actualidad/cochabamba":
         __extract_los_tiempos(page)
     elif base_url == "https://www.opinion.com.bo/blog/section/cochabamba/":

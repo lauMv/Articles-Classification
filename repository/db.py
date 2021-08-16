@@ -1,8 +1,7 @@
 import jaydebeapi
 from pathlib import Path
 import os
-# from repository import articles_schema as ArticleSchema
-import articles_schema as ArticleSchema
+from .articles_schema import ArticleSchema
 
 _driver_class = "org.h2.Driver"
 _jdbc_url = "jdbc:h2:tcp://localhost:5234/articles_classification"
@@ -13,24 +12,25 @@ _h2_jar = str(os.path.join(Path(__file__).absolute().parents[1], "h2", "bin", "h
 def init_db():
     _execute(
         ("CREATE TABLE IF NOT EXISTS articles ("
-            "  source_file_path VARCHAR NOT NULL,"
-            "  pre_processed_file_path VARCHAR NOT NULL,"
-            "  extraction_date VARCHAR NOT NULL,"
-            "  user_classification VARCHAR,"
-            "  model_classification VARCHAR)"))
+         "  source_file_path VARCHAR NOT NULL,"
+         "  pre_processed_file_path VARCHAR NOT NULL,"
+         "  extraction_date VARCHAR NOT NULL,"  # TODO - cambiar a DATE
+         "  user_classification VARCHAR,"  # TODO - cambiar a BOOLEAN
+         "  model_classification VARCHAR)"))  # TODO - cambiar a BOOLEAN
 
 
 def get_all():
-    return _execute("SELECT * FROM articles", returnResult=True)
+    return _execute("SELECT * FROM articles", return_entity=True)
 
 
 def get(source_file_path):
-    return _execute("SELECT * FROM articles WHERE source_file_path = {}".format(source_file_path), returnResult=True)
+    return _execute("SELECT * FROM articles WHERE source_file_path = {}".format(source_file_path), return_entity=True)
 
 
 def create(article):
-    count = _execute("SELECT count(*) AS count FROM articles WHERE source_file_path LIKE '{}'".format(article.get("source_file_path")),
-                     returnResult=True)
+    source_file_path = article.get("source_file_path")
+    query = r"SELECT count(*) AS count FROM articles WHERE source_file_path = '{0}'".format(source_file_path)
+    count = _execute(query, return_entity=False)
 
     if count[0]["count"] > 0:
         return
@@ -44,7 +44,7 @@ def create(article):
 
 def update(articles, source_file_path):
     count = _execute("SELECT count(*) AS count FROM articles WHERE source_file_path = {}".format(source_file_path),
-                     returnResult=True)
+                     return_entity=True)
     if count[0]["count"] == 0:
         return
     values = ["'{}'".format(value) for value in articles.values()]
@@ -55,32 +55,42 @@ def update(articles, source_file_path):
 
 def delete(source_file_path):
     count = _execute("SELECT count(*) AS count FROM articles WHERE source_file_path = {}".format(source_file_path),
-                     returnResult=True)
+                     return_entity=True)
     if count[0]["count"] == 0:
         return
     _execute("DELETE FROM articles WHERE source_file_path = {}".format(source_file_path))
     return {}
 
 
-def _convert_to_schema(cursor):
+def build_list_of_dicts(cursor):
     column_names = [record[0].lower() for record in cursor.description]
     column_and_values = [dict(zip(column_names, record)) for record in cursor.fetchall()]
+    return column_and_values
 
-    return ArticleSchema().load(column_and_values, many=True)
+
+def _convert_to_schema(list_of_dicts):
+    return ArticleSchema().load(list_of_dicts, many=True)
 
 
-def _execute(query, returnResult=None):
+def _execute(query, return_entity=None):
     connection = jaydebeapi.connect(_driver_class, _jdbc_url, _credentials, _h2_jar)
     cursor = connection.cursor()
     cursor.execute(query)
-    if returnResult:
-        returnResult = _convert_to_schema(cursor)
+
+    query_result = None
+    if cursor.rowcount == -1:
+        query_result = build_list_of_dicts(cursor)
+
+    if query_result is not None and return_entity:
+        query_result = _convert_to_schema(query_result)
+
     cursor.close()
     connection.close()
 
-    return returnResult
+    return query_result
 
 
+# FIXME para qué es esto?
 articles_data = [
     {
         "id": "1",
@@ -564,7 +574,7 @@ articles_data = [
         "model_classification": "None, 0, 1"
     },
     {
-         "id": "61",
+        "id": "61",
         "source_file_path": "D:/Universidad/semestre 11/taller/Proyecto/Articles-Classification/articulos_pre_clasificados/malos_limpios/cleaned 09 May 2021 Urbanizaciones y deforestación ponen en peligro La Angostura   Los Tiempos",
         "pre_processed_file_path": "D:/Universidad/semestre 11/taller/Proyecto/Articles-Classification/cleaned_articles/cleaned 09 May 2021 Urbanizaciones y deforestación ponen en peligro La Angostura   Los Tiempos",
         "extraction_date": "09 May 2021",
@@ -608,8 +618,8 @@ articles_data = [
         "source_file_path": "D:/Universidad/semestre 11/taller/Proyecto/Articles-Classification/articulos_pre_clasificados/malos_limpios/cleaned articles 14 de mayo de 2021  00 00 h   15 municipios prevén declarar emergencia por falta de agua   Cochabamba   Opinión Bolivia ",
         "pre_processed_file_path": "D:/Universidad/semestre 11/taller/Proyecto/Articles-Classification/cleaned_articles/cleaned articles 14 de mayo de 2021  00 00 h   15 municipios prevén declarar emergencia por falta de agua   Cochabamba   Opinión Bolivia ",
         "extraction_date": "14 de mayo de 2021  00 00 h",
-        "user_classification":  "None, 0, 1",
-        "model_classification":  "None, 0, 1"
+        "user_classification": "None, 0, 1",
+        "model_classification": "None, 0, 1"
     },
     {
         "id": "67",
