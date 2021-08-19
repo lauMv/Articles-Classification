@@ -25,17 +25,16 @@ def add_clean_article_to_db(path, pre_processed_file_path, name):
                   "source_file_path": source_path,
                   "pre_processed_file_path": pre_processed_file_path,
                   "extraction_date": extract_date(name),
-                  "user_classification": False, # FIXME luego de cambiar el tipo de dato a BOOLEAN, esto deber ser False
-                  "model_classification": False} # FIXME luego de cambiar el tipo de dato a BOOLEAN, esto deber ser False
+                  "user_classification": False,
+                  "model_classification": False}
     db.create(article)
 
 
 def clean_articles():
-    # FIXME solamente hay que limpiar archivos recién descargados.
     files = os.listdir(os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "articles"))
     path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", "")
     for file in files:
-        if not os.path.exists(file):
+        if not os.path.exists(file):   # FIXME no ejecutar este bloque si el artículo ya fue limpiado
             with open(path + file, "r", encoding="utf-8", errors="ignore") as article_file:
                 article = article_file.read()
                 cleaned = clean_text(article.replace("\n", ""))
@@ -62,4 +61,4 @@ def save_cleaned_article(name, clean_article, path):
             file.write(text)
             file.close()
         print("Guardando artículo limpio en {}".format(path_))
-        add_clean_article_to_db(path, path_, name)  # FIXME esta llamada debe realizarse DESPUES de guardar el archivo!
+        add_clean_article_to_db(path, path_, name)

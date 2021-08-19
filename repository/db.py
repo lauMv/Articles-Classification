@@ -1,8 +1,8 @@
 import jaydebeapi
 from pathlib import Path
 import os
-# from .articles_schema import ArticleSchema
 from repository.articles_schema import ArticleSchema
+
 _driver_class = "org.h2.Driver"
 _jdbc_url = "jdbc:h2:tcp://localhost:5234/articles_classification"
 _credentials = ["SA", os.getenv("TEXT_CLASSIFIER_DB_PASSWORD")]
@@ -14,11 +14,12 @@ def init_db():
         ("CREATE TABLE IF NOT EXISTS Article ("
          "  source_file_path VARCHAR NOT NULL,"
          "  pre_processed_file_path VARCHAR NOT NULL,"
-         "  extraction_date DATE NOT NULL,"  # TODO - cambiar a DATE
-         "  user_classification BOOLEAN,"  # TODO - cambiar a BOOLEAN
-         "  model_classification BOOLEAN)"))  # TODO - cambiar a BOOLEAN
+         "  extraction_date DATE NOT NULL,"
+         "  user_classification BOOLEAN,"
+         "  model_classification BOOLEAN)"))
 
 
+# FIXME la tabla se crea con el nombre 'Article' pero muchas consultas emplean el nombre 'articles'
 def get_all():
     return _execute("SELECT * FROM articles", return_entity=True)
 
@@ -62,7 +63,8 @@ def delete(source_file_path):
     return {}
 
 
-def build_list_of_dicts(cursor):
+# Helper methods
+def _build_list_of_dicts(cursor):
     column_names = [record[0].lower() for record in cursor.description]
     column_and_values = [dict(zip(column_names, record)) for record in cursor.fetchall()]
     return column_and_values
@@ -79,7 +81,7 @@ def _execute(query, return_entity=None):
 
     query_result = None
     if cursor.rowcount == -1:
-        query_result = build_list_of_dicts(cursor)
+        query_result = _build_list_of_dicts(cursor)
 
     if query_result is not None and return_entity:
         query_result = _convert_to_schema(query_result)
@@ -88,6 +90,3 @@ def _execute(query, return_entity=None):
     connection.close()
 
     return query_result
-
-
-# FIXME para qué es esto?

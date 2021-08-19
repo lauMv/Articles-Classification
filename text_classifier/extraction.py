@@ -6,17 +6,18 @@ from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 
+LOS_TIEMPOS = "Los Tiempos"
+OPINION = "Opinion"
+LA_RAZON = "La Razon"
+
 
 def execute():
-
-    # FIXME esto no debería ser un for? Es decir, se puede armar una lista
-    #  [LOS_TIEMPOS_BASE_URL, OPINION_BASE_URL, LA_RAZON_BASE_URL] y llamar a __extract_text en un for
-    newspapers = {"Los Tiempos": "https://www.lostiempos.com/actualidad/cochabamba",
-                  "Opinion": "https://www.opinion.com.bo/blog/section/cochabamba/",
-                  "La Razon": "https://www.la-razon.com/nacional/"}
-    for key, value in newspapers.items():
-        print("Iniciando el proceso de extracción de ", key)
-        __extract_text(key, value)      # FIXME por qué está comentado?
+    newspapers = {LOS_TIEMPOS: "https://www.lostiempos.com/actualidad/cochabamba",
+                  OPINION: "https://www.opinion.com.bo/blog/section/cochabamba/",
+                  LA_RAZON: "https://www.la-razon.com/nacional/"}
+    for newspaper, url in newspapers.items():
+        print("Iniciando el proceso de extracción de ", newspaper)
+        __extract_text(newspaper, url)
 
 
 def __div_links(articles_divs):
@@ -84,7 +85,7 @@ def __extract_los_tiempos(page):
 
     articles_divs = __get_divs_los_tiempos(page)
     links = __get_links(articles_divs, build_validation_function_for_los_tiempos())
-    __get_articles_los_tiempos(links)   # FIXME por qué solo se extrae el primer artículo?
+    __get_articles_los_tiempos(links)
 
 
 def __extract_opinion(page):
@@ -125,7 +126,7 @@ def __extract_opinion(page):
 
     articles_divs = __get_divs_opinion(page)
     links = __get_links(articles_divs, build_validation_function_for_opinion())
-    __get_articles_opinion(links)   # FIXME por qué solo se extrae el primer artículo?
+    __get_articles_opinion(links)
 
 
 def __extract_la_razon(page):
@@ -170,18 +171,17 @@ def __extract_la_razon(page):
 
     articles_divs = __get_divs_la_razon(page)
     links = __get_links_la_razon(articles_divs, build_validation_function_for_la_razon())
-    __get_articles_la_razon(links)  # FIXME por qué solo se extrae el primer artículo?
+    __get_articles_la_razon(links)
 
 
-def __extract_text(diary, base_url):
+def __extract_text(newspaper, base_url):
     response = requests.get(base_url)
     page = BeautifulSoup(response.text, "html.parser")
-    # FIXME por qué no se usan las contantes LOS_TIEMPOS_BASE_URL, OPINION_BASE_URL, LA_RAZON_BASE_URL?
-    if diary == "Los Tiempos":
+    if newspaper == LOS_TIEMPOS:
         __extract_los_tiempos(page)
-    elif diary == "Opinion":
+    elif newspaper == OPINION:
         __extract_opinion(page)
-    elif diary == "La Razon":
+    elif newspaper == LA_RAZON:
         __extract_la_razon(page)
 
 
