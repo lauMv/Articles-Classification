@@ -5,9 +5,9 @@ from marshmallow import Schema, fields, EXCLUDE
 class ArticleSchema(Schema):
     source_file_path = fields.Str(allow_none=False)
     pre_processed_file_path = fields.Str(allow_none=False)
-    extraction_date = fields.Str(allow_none=False)              # FIXME actualizar
-    user_classification = fields.Str(allow_none=True)           # FIXME actualizar
-    model_classification = fields.Str(allow_none=True)          # FIXME actualizar
+    extraction_date = fields.Date(allow_none=False)              # FIXME actualizar
+    user_classification = fields.Boolean(allow_none=True)           # FIXME actualizar
+    model_classification = fields.Boolean(allow_none=True)          # FIXME actualizar
 
     class Meta:
         unknown = EXCLUDE

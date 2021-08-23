@@ -21,16 +21,16 @@ def init_db():
 
 # FIXME la tabla se crea con el nombre 'Article' pero muchas consultas emplean el nombre 'articles'
 def get_all():
-    return _execute("SELECT * FROM articles", return_entity=True)
+    return _execute("SELECT * FROM Article", return_entity=True)
 
 
 def get(source_file_path):
-    return _execute("SELECT * FROM articles WHERE source_file_path = {}".format(source_file_path), return_entity=True)
+    return _execute("SELECT * FROM Article WHERE source_file_path = {}".format(source_file_path), return_entity=True)
 
 
 def create(article):
     source_file_path = article.get("source_file_path")
-    query = r"SELECT count(*) AS count FROM articles WHERE source_file_path = '{0}'".format(source_file_path)
+    query = r"SELECT count(*) AS count FROM Article WHERE source_file_path = '{0}'".format(source_file_path)
     count = _execute(query, return_entity=False)
 
     if count[0]["count"] > 0:
@@ -38,28 +38,28 @@ def create(article):
 
     columns = ", ".join(article.keys())
     values = ", ".join("'{}'".format(value) for value in article.values())
-    _execute("INSERT INTO article ({}) VALUES({})".format(columns, values))
+    _execute("INSERT INTO Article ({}) VALUES({})".format(columns, values))
 
     return {}
 
 
 def update(articles, source_file_path):
-    count = _execute("SELECT count(*) AS count FROM articles WHERE source_file_path = {}".format(source_file_path),
+    count = _execute("SELECT count(*) AS count FROM Article WHERE source_file_path = {}".format(source_file_path),
                      return_entity=True)
     if count[0]["count"] == 0:
         return
     values = ["'{}'".format(value) for value in articles.values()]
     update_values = ", ".join("{} = {}".format(key, value) for key, value in zip(articles.keys(), values))
-    _execute("UPDATE articles SET {} WHERE source_file_path = {}".format(update_values, source_file_path))
+    _execute("UPDATE Article SET {} WHERE source_file_path = {}".format(update_values, source_file_path))
     return {}
 
 
 def delete(source_file_path):
-    count = _execute("SELECT count(*) AS count FROM articles WHERE source_file_path = {}".format(source_file_path),
+    count = _execute("SELECT count(*) AS count FROM Article WHERE source_file_path = {}".format(source_file_path),
                      return_entity=True)
     if count[0]["count"] == 0:
         return
-    _execute("DELETE FROM articles WHERE source_file_path = {}".format(source_file_path))
+    _execute("DELETE FROM Article WHERE source_file_path = {}".format(source_file_path))
     return {}
 
 

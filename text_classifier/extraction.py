@@ -58,7 +58,7 @@ def __extract_los_tiempos(page):
         date_find = re.compile(r"^/actualidad/(cochabamba|pais)/(?P<date>\d{8})")
         regex_match = date_find.search(link)
         date_str = str(regex_match.group('date'))
-        article_title = (date_str + " " + title_article)
+        article_title = (date_str.replace(" ", "") + " " + title_article)
         article_title = __remove_punctuation(article_title)
         return article_title
 
@@ -98,7 +98,7 @@ def __extract_opinion(page):
         opinion_pattern = re.compile(r"^/articulo/(cochabamba|pais)/.*?/(?P<date>\d{8})")
         regex_match = opinion_pattern.search(link)
         article_date = str(regex_match.group('date'))
-        article_title = (article_date + " " + title_article)
+        article_title = (article_date.replace(" ", "") + " " + title_article)
         article_title = __remove_punctuation(article_title)
         return article_title
 
@@ -143,6 +143,7 @@ def __extract_la_razon(page):
         la_razon_pattern = re.compile(r"^https://www\.la-razon\.com/nacional/(?P<date>\d{4}/\d{2}/\d{2})")
         regex_match = la_razon_pattern.search(link)
         date_str = regex_match.group('date')
+        date_str.replace(" ", "")
         article_title = (date_str.replace('/', '') + " " + title_article)
         article_title = __remove_punctuation(article_title)
         return article_title

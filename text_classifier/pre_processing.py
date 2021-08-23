@@ -53,8 +53,7 @@ def clean_text(text):
 
 
 def save_cleaned_article(name, clean_article, path):
-    name_ = "cleaned " + name
-    path_ = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "cleaned_articles", name_)
+    path_ = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "cleaned_articles", name)
     if not os.path.exists(path_):
         with open(path_, "a+", encoding="utf-8") as file:
             text = " ".join(clean_article)
