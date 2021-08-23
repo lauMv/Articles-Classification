@@ -1,7 +1,7 @@
 import jaydebeapi
 from pathlib import Path
 import os
-from repository.articles_schema import ArticleSchema
+from repository.article_schema import ArticleSchema
 
 _driver_class = "org.h2.Driver"
 _jdbc_url = "jdbc:h2:tcp://localhost:5234/articles_classification"
@@ -19,7 +19,6 @@ def init_db():
          "  model_classification BOOLEAN)"))
 
 
-# FIXME la tabla se crea con el nombre 'Article' pero muchas consultas emplean el nombre 'articles'
 def get_all():
     return _execute("SELECT * FROM Article", return_entity=True)
 
@@ -43,13 +42,13 @@ def create(article):
     return {}
 
 
-def update(articles, source_file_path):
+def update(article, source_file_path):
     count = _execute("SELECT count(*) AS count FROM Article WHERE source_file_path = {}".format(source_file_path),
                      return_entity=True)
     if count[0]["count"] == 0:
         return
-    values = ["'{}'".format(value) for value in articles.values()]
-    update_values = ", ".join("{} = {}".format(key, value) for key, value in zip(articles.keys(), values))
+    values = ["'{}'".format(value) for value in article.values()]
+    update_values = ", ".join("{} = {}".format(key, value) for key, value in zip(article.keys(), values))
     _execute("UPDATE Article SET {} WHERE source_file_path = {}".format(update_values, source_file_path))
     return {}
 
