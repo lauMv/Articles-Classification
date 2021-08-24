@@ -13,32 +13,38 @@ def execute():
 
 
 def extract_date(path):
-    opinion_pattern = re.compile(r"^(?P<date>\d{8})")
-    regex_match = opinion_pattern.search(path)
+    date_pattern = re.compile(r"^(?P<date>\d{8})")
+    regex_match = date_pattern.search(path.replace(' ', ''))
     article_date = datetime.strptime(regex_match.group('date'), '%Y%m%d')
     return article_date.date()
 
 
-def add_clean_article_to_db(path, pre_processed_file_path, name):
-    source_path = path + " " + name
-    article = {
-                  "source_file_path": source_path,
-                  "pre_processed_file_path": pre_processed_file_path,
-                  "extraction_date": extract_date(name),
-                  "user_classification": False,
-                  "model_classification": False}
-    db.create(article)
-
+def add_clean_article_to_db(filename):
+    try :
+        extract_date(filename)
+        source_path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", filename)
+        pre_processed_file_path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "cleaned_articles", filename)
+        article = {
+                      "source_file_path": source_path,
+                      "pre_processed_file_path": pre_processed_file_path,
+                      "extraction_date": extract_date(filename),
+                      "user_classification": False,
+                      "model_classification": False}
+        db.create(article)
+    except: pass
 
 def clean_articles():
-    files = os.listdir(os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "articles"))
-    path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", "")
+    files = os.listdir(os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles"))
     for file in files:
-        if not os.path.exists(file):   # FIXME no ejecutar este bloque si el artículo ya fue limpiado
-            with open(path + file, "r", encoding="utf-8", errors="ignore") as article_file:
+        path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "cleaned_articles", file)
+        if not os.path.exists(path):
+            article_path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", file)
+            with open(article_path, "r", encoding="utf-8", errors="ignore") as article_file:
                 article = article_file.read()
                 cleaned = clean_text(article.replace("\n", ""))
-                save_cleaned_article(file, cleaned, path)
+                save_cleaned_article(file, cleaned)
+                add_clean_article_to_db(file)
+                print("saved to db:", file)
     print("Clean all articles")
 
 
@@ -52,12 +58,11 @@ def clean_text(text):
     return cleaned_text
 
 
-def save_cleaned_article(name, clean_article, path):
-    path_ = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "cleaned_articles", name)
-    if not os.path.exists(path_):
-        with open(path_, "a+", encoding="utf-8") as file:
+def save_cleaned_article(filename, clean_article):
+    path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "cleaned_articles", filename)
+    if not os.path.exists(path):
+        with open(path, "a+", encoding="utf-8") as file:
             text = " ".join(clean_article)
             file.write(text)
             file.close()
-        print("Guardando artículo limpio en {}".format(path_))
-        add_clean_article_to_db(path, path_, name)
+        print("Guardando artículo limpio en {}".format(path))
