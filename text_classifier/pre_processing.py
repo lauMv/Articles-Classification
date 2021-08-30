@@ -20,7 +20,6 @@ def extract_date(path):
 
 
 def add_clean_article_to_db(filename):
-    try:
         extract_date(filename)
         source_path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", filename)
         pre_processed_file_path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "cleaned_articles", filename)
@@ -31,7 +30,6 @@ def add_clean_article_to_db(filename):
                       "user_classification": False,
                       "model_classification": False}
         db.create(article)
-    except: pass
 
 
 def clean_articles():
