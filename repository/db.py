@@ -1,7 +1,8 @@
 import jaydebeapi
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import os
 from repository.article_schema import ArticleSchema
+
 
 _driver_class = "org.h2.Driver"
 _jdbc_url = "jdbc:h2:tcp://localhost:5234/articles_classification"
@@ -43,8 +44,9 @@ def create(article):
 
 
 def update(article, source_file_path):
-    count = _execute("SELECT count(*) AS count FROM Article WHERE source_file_path = {}".format(source_file_path),
-                     return_entity=True)
+    query = "SELECT count(*) AS count FROM Article WHERE source_file_path = '{}'".format(source_file_path)
+    count = _execute(query, return_entity=True)
+    print("lo que llega", count)
     if count[0]["count"] == 0:
         return
     values = ["'{}'".format(value) for value in article.values()]
@@ -84,8 +86,9 @@ def _execute(query, return_entity=None):
 
     if query_result is not None and return_entity:
         query_result = _convert_to_schema(query_result)
+        print("this es the result qw= ", query_result)
 
     cursor.close()
     connection.close()
-
+    print("result=", query_result)
     return query_result

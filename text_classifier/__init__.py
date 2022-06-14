@@ -3,11 +3,15 @@ import time
 
 from .extraction import execute as execute_extraction
 from .pre_processing import execute as execute_preprocessing
+from .classifier import execute as execute_classifier
+from repository import init_db
 
 
 def main():
-    execute_extraction()
-    execute_preprocessing()
+    # init_db()
+    # execute_extraction()
+    # execute_preprocessing()
+    execute_classifier()
 
 
 print("Iniciando main()")
