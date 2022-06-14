@@ -8,9 +8,9 @@ from repository import init_db
 
 
 def main():
-    # init_db()
-    # execute_extraction()
-    # execute_preprocessing()
+    init_db()
+    execute_extraction()
+    execute_preprocessing()
     execute_classifier()
 
 

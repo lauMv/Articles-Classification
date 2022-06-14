@@ -86,9 +86,7 @@ def _execute(query, return_entity=None):
 
     if query_result is not None and return_entity:
         query_result = _convert_to_schema(query_result)
-        print("this es the result qw= ", query_result)
 
     cursor.close()
     connection.close()
-    print("result=", query_result)
     return query_result
