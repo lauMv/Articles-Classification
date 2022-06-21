@@ -1,73 +1,105 @@
-import re
-from datetime import datetime
-from pathlib import PurePosixPath
+# This Python file uses the following encoding: utf-8
 
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.linear_model import LogisticRegression
 from repository import db
 
+from text_classifier.model import Model
 import os
 
 
 def execute():
     print("clasificando...")
-    clf, count_vectorizer = train_classifier()
-    classifier_articles(clf, count_vectorizer)
-
-
-def upload_files_to_train():
-    pre_processes_docs = [article for article in os.listdir(os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") +
-                                                                         "articulos_pre_clasificados" + "\\" + "buenos_limpios"))]
-    pre_processes_docs_class = [0 for article in pre_processes_docs]
-
-    pre_processes_conflicts_docs = [article for article in os.listdir(
-        os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "articulos_pre_clasificados" + "\\"
-                     + "malos_limpios"))]
-    pre_processes_conflicts_docs_class = [1 for article in pre_processes_docs]
-    pre_processes_docs = pre_processes_docs + pre_processes_conflicts_docs
-    pre_processes_docs_class = pre_processes_docs_class + pre_processes_conflicts_docs_class
-    return pre_processes_docs, pre_processes_docs_class
-
-
-def train_classifier():
-    pre_processes_docs, pre_processes_docs_class = upload_files_to_train()
-    count_vectorizer = CountVectorizer(encoding='utf-8', max_df=1.0, min_df=1, max_features=None,
-                                       binary=False).fit(pre_processes_docs)
-    pre_processes_docs_vectors = count_vectorizer.transform(pre_processes_docs)
-    clf = LogisticRegression()
-    clf.fit(pre_processes_docs_vectors.toarray(), pre_processes_docs_class)
-    print("clasificador entrenado")
-    return clf, count_vectorizer
-
-
-def classifier_articles(clf, count_vectorizer):
-    new_pre_processes_docs = [article for article in os.listdir(
+    model = Model()
+    train_model(model)
+    data = [article for article in os.listdir(
         os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "cleaned_articles"))]
-    new_pre_processes_docs_vectors = count_vectorizer.transform(new_pre_processes_docs)
-    new_pre_processes_docs_predicted_class = clf.predict(new_pre_processes_docs_vectors)
-    article_classification = [(new_pre_processes_docs[i], new_pre_processes_docs_predicted_class[i]) for i in
-                              range(0, len(new_pre_processes_docs))]
+    predicted = predict_articles(model, data)
+    print(predicted)
+
+
+def get_articles(folder, folder_type):
+    articles = []
+    files = os.listdir(os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), folder, folder_type))
+    path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), folder, folder_type, "")
+    for file in files:
+        with open(path + file, "r", encoding="utf-8", errors="ignore") as article_file:
+            articles.append(article_file.read())
+    return articles
+
+
+def upload_files_to_set():
+    pre_processes_docs = get_articles("articulos_pre_clasificados", "buenos_limpios")
+    pre_processes_docs = pre_processes_docs + get_articles("articulos_pre_clasificados", "malos_limpios")
+    pre_processes_docs_class = list(0 for elen in range(0, 35)) + list(1 for elem in range(0, 35))
+
+    new_pre_processes_docs = get_articles("test_articles", "buenos")
+    new_pre_processes_docs = new_pre_processes_docs + get_articles("test_articles", "malos")
+    new_pre_processes_docs_predicted_class = list(0 for elem in range(0, 35)) + list(1 for elem in range(0, 35))
+
+    return pre_processes_docs, pre_processes_docs_class, new_pre_processes_docs, new_pre_processes_docs_predicted_class
+
+
+conflict_words = ["caso", "denuncia","huelga","emergencia","delitos","conflicto","crisis",
+    "sufrir","difícil","presidio","violaciones","rechazó","auditorías","bloqueo","vulnerando",
+    "ilegales","advierten","injusticias","crítica","traición","convocó","incumplimiento",
+    "declarar" ,"reportó","crímenes","destrucción","paro","detención","paralización","alertó",
+    "movilizaciones","protesta","fraude","violencia","amenaza","agresiones","robar","enfrentar",
+    "riesgo","caída","proceso","contrabando","afectar","dañar","gasto","multas","problemas"]
+save_words = ["garantizó","legales","iniciativa","afluencia","superar","reconocimiento",
+"compromiso","gracias","dialogar","apoyo","agradeció","voluntarios","esfuerzo","brigadas","convenio",
+"cuidados","desinteresado","responsable","inauguración","bonos","impulsar","destacado","preservar",
+"gratuitas","capacitó","derecho","reforzar","campaña","ayudarán","conmemora","operativos",
+"feliz","priorizar","recaudaciones","contribuciones","mejora","estima","celebró","satisfacer",
+"tecnología","cumplir","desarrollo","homenaje","seguridad","beneficio","participación","aprendió"]
+
+
+def count_words(article):
+    cant = 0
+    for word in article.split(' '):
+        if word in conflict_words:
+            cant = cant + 1
+        if word in save_words:
+            cant = cant - 1
+    return cant
+
+
+def get_flags(pre_processes_docs):
+    flags = []
+    for article in pre_processes_docs:
+        flags.append(count_words(article))
+    return flags
+
+
+def train_model(model):
+    train_docs, train_docs_class, new_docs, new_docs_class = upload_files_to_set()
+    model.fit(train_docs, train_docs_class)
+
+    new_docs_vec = model.fit_transform(new_docs)
+    new_docs_predicted_class = model.predict(new_docs_vec)
+    model.eval_model(new_docs_class, new_docs_predicted_class)
+    print("clasificador entrenado")
+
+
+def predict_articles(model, new_docs):
+    new_docs_vectors = model.vectorizer.transform(new_docs)
+    new_docs_predicted_class = model.predict(new_docs_vectors)
+    article_classification = [(new_docs[i], new_docs_predicted_class[i]) for i in
+                              range(0, len(new_docs))]
     for article in article_classification:
         save_classification_db(article[0], article[1])
-    # return [save_classification_db(article[0], article[1]) for article in article_classification]
+    print('classification saved on DB')
+    return new_docs_predicted_class
+# predicted_class [1 0 ...]
 
 
 def save_classification_db(filename, classification):
+    source_file_path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", filename)
     try:
-        source_path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", filename)
         if classification.astype(int) == 1:
-            print(PurePosixPath(source_path), classification)
             update = {
                            "model_classification": True}
-            db.update(update, source_path)
-            print('update classification on DB')
+            db.update(update, source_file_path)
+            print("Update:", source_file_path)
     except:
         print("no guardo")
         pass
 
-
-def extract_date(path):
-    date_pattern = re.compile(r"^(?P<date>\d{8})")
-    regex_match = date_pattern.search(path.replace(' ', ''))
-    article_date = datetime.strptime(regex_match.group('date'), '%Y%m%d')
-    return article_date.date()

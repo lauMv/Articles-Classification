@@ -26,8 +26,9 @@ def add_clean_article_to_db(filename):
         article = {
                       "source_file_path": source_path,
                       "pre_processed_file_path": pre_processed_file_path,
+                      "filename": filename,
                       "extraction_date": extract_date(filename),
-                      "user_classification": False,
+                      "user_classification": "",
                       "model_classification": False}
         db.create(article)
     except: pass

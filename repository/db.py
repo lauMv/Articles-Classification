@@ -1,5 +1,5 @@
 import jaydebeapi
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 import os
 from repository.article_schema import ArticleSchema
 
@@ -15,8 +15,9 @@ def init_db():
         ("CREATE TABLE IF NOT EXISTS Article ("
          "  source_file_path VARCHAR NOT NULL,"
          "  pre_processed_file_path VARCHAR NOT NULL,"
+         "  filename VARCHAR NOT NULL,"
          "  extraction_date DATE NOT NULL,"
-         "  user_classification BOOLEAN,"
+         "  user_classification VARCHAR NOT NULL,"
          "  model_classification BOOLEAN)"))
 
 
@@ -26,6 +27,11 @@ def get_all():
 
 def get(source_file_path):
     return _execute("SELECT * FROM Article WHERE source_file_path = {}".format(source_file_path), return_entity=True)
+
+
+def get_by_user_classification(user_classification):
+    return _execute("SELECT * FROM Article WHERE user_classification = {}".format(user_classification),
+                    return_entity=True)
 
 
 def create(article):
@@ -45,22 +51,23 @@ def create(article):
 
 def update(article, source_file_path):
     query = "SELECT count(*) AS count FROM Article WHERE source_file_path = '{}'".format(source_file_path)
-    count = _execute(query, return_entity=True)
-    print("lo que llega", count)
+    count = _execute(query, return_entity=False)
+
     if count[0]["count"] == 0:
         return
+
     values = ["'{}'".format(value) for value in article.values()]
     update_values = ", ".join("{} = {}".format(key, value) for key, value in zip(article.keys(), values))
-    _execute("UPDATE Article SET {} WHERE source_file_path = {}".format(update_values, source_file_path))
+    _execute("UPDATE Article SET {} WHERE source_file_path = '{}'".format(update_values, source_file_path))
     return {}
 
 
 def delete(source_file_path):
-    count = _execute("SELECT count(*) AS count FROM Article WHERE source_file_path = {}".format(source_file_path),
-                     return_entity=True)
+    count = _execute("SELECT count(*) AS count FROM Article WHERE source_file_path = '{}'".format(source_file_path),
+                     return_entity=False)
     if count[0]["count"] == 0:
         return
-    _execute("DELETE FROM Article WHERE source_file_path = {}".format(source_file_path))
+    _execute("DELETE FROM Article WHERE source_file_path = '{}'".format(source_file_path))
     return {}
 
 
