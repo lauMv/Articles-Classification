@@ -8,6 +8,7 @@ class ArticleSchema(Schema):
     extraction_date = fields.Date(allow_none=False)
     user_classification = fields.Str(allow_none=False)
     model_classification = fields.Boolean(allow_none=False)
+    used_in_classifier = fields.Boolean(allow_none=False)
 
     class Meta:
         unknown = EXCLUDE

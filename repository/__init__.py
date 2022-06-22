@@ -1,3 +1,5 @@
-from .db import init_db
+from .article_db import init_db
+from .classifier_db import init_classifier_db
 
 init_db()
+init_classifier_db()

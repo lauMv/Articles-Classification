@@ -49,17 +49,21 @@ def get_flags():
     return flags
 
 
+
 count_vectorizer = CountVectorizer(encoding='utf-8', min_df=0.1, max_features=634).fit(pre_processes_docs, get_flags())
+
 pre_processes_docs_vectors = count_vectorizer.transform(pre_processes_docs)
 print(pre_processes_docs_vectors.shape)
 
 clf = LogisticRegression()
 clf.fit(pre_processes_docs_vectors.toarray(), pre_processes_docs_class)
 
+
 new_pre_processes_docs = [article for article in os.listdir(
     os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "test_articles" + "\\" + "buenos"))]
 new_pre_processes_docs = new_pre_processes_docs + [article for article in os.listdir(
     os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "test_articles" + "\\" + "malos"))]
+
 new_pre_processes_docs_vectors = count_vectorizer.transform(new_pre_processes_docs)
 
 new_pre_processes_docs_predicted_class = clf.predict(new_pre_processes_docs_vectors)
@@ -76,8 +80,20 @@ print('recall {0:.2f}'.format(recall_score(expected, clf.predict(new_pre_process
 # f1
 print('f1 {0:.2f}'.format(f1_score(expected, clf.predict(new_pre_processes_docs_vectors))))
 
-dump(count_vectorizer, 'count_vectorizer.joblib')
-count_vectorizer_loaded = load('count_vectorizer.joblib')
-pickle.dump(count_vectorizer, open("classifiers/count_vectorizer.pickle.dat", "wb"))
-loaded_model = pickle.load(open("classifiers/count_vectorizer.pickle.dat", "rb"))
-loaded_count_vectors = loaded_model.transform(pre_processes_docs)
+# dump(count_vectorizer, 'classifiers/count_vectorizer.joblib')
+# count_vectorizer_loaded = load('classifiers/count_vectorizer.joblib')
+# pickle.dump(count_vectorizer, open("classifiers/count_vectorizer.pickle.dat", "wb"))
+# loaded_model = pickle.load(open("classifiers/count_vectorizer.pickle.dat", "rb"))
+# loaded_count_vectors = loaded_model.transform(pre_processes_docs)
+
+
+data = [article for article in os.listdir(
+    os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "cleaned_articles"))]
+
+new_vecs = count_vectorizer.transform(data)
+new_doc_class = clf.predict(new_vecs)
+
+article_classification = [(data[i], new_doc_class[i]) for i in
+                              range(0, len(data))]
+for article in article_classification:
+     print(article[0], article[1])

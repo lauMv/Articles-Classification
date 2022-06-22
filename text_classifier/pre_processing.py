@@ -2,7 +2,7 @@ import os
 import re
 from datetime import datetime
 import spacy
-from repository import db
+from repository import article_db
 
 nlp = spacy.load('es_core_news_md')
 
@@ -29,8 +29,10 @@ def add_clean_article_to_db(filename):
                       "filename": filename,
                       "extraction_date": extract_date(filename),
                       "user_classification": "",
-                      "model_classification": False}
-        db.create(article)
+                      "model_classification": False,
+                      "used_in_classifier": False
+                        }
+        article_db.create(article)
     except: pass
 
 

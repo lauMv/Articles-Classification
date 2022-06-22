@@ -18,11 +18,12 @@ def init_db():
          "  filename VARCHAR NOT NULL,"
          "  extraction_date DATE NOT NULL,"
          "  user_classification VARCHAR NOT NULL,"
-         "  model_classification BOOLEAN)"))
+         "  model_classification BOOLEAN,"
+         "  used_in_classifier BOOLEAN)"))
 
 
 def get_all():
-    return _execute("SELECT * FROM Article", return_entity=True)
+    return _execute("SELECT * FROM Article", return_entity=False)
 
 
 def get(source_file_path):
@@ -32,6 +33,10 @@ def get(source_file_path):
 def get_by_user_classification(user_classification):
     return _execute("SELECT * FROM Article WHERE user_classification = {}".format(user_classification),
                     return_entity=True)
+
+
+def get_used_in_classifier():
+    return _execute("SELECT * FROM Article WHERE used_in_classifier = TRUE")
 
 
 def create(article):
@@ -69,6 +74,7 @@ def delete(source_file_path):
         return
     _execute("DELETE FROM Article WHERE source_file_path = '{}'".format(source_file_path))
     return {}
+
 
 
 # Helper methods
