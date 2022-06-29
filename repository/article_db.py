@@ -17,6 +17,8 @@ def init_db():
          "  pre_processed_file_path VARCHAR NOT NULL,"
          "  filename VARCHAR NOT NULL,"
          "  extraction_date DATE NOT NULL,"
+         "  paper VARCHAR NOT NULL,"
+         "  article_content VARCHAR NOT NULL,"
          "  user_classification VARCHAR NOT NULL,"
          "  model_classification BOOLEAN,"
          "  used_in_classifier BOOLEAN)"))
@@ -26,8 +28,8 @@ def get_all():
     return _execute("SELECT * FROM Article", return_entity=False)
 
 
-def get(source_file_path):
-    return _execute("SELECT * FROM Article WHERE source_file_path = {}".format(source_file_path), return_entity=True)
+def get(filename):
+    return _execute("SELECT * FROM Article WHERE filename = {}".format(filename), return_entity=True)
 
 
 def get_by_user_classification(user_classification):
@@ -54,7 +56,8 @@ def create(article):
     return {}
 
 
-def update(article, source_file_path):
+def update(article, filename):
+    source_file_path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", filename)
     query = "SELECT count(*) AS count FROM Article WHERE source_file_path = '{}'".format(source_file_path)
     count = _execute(query, return_entity=False)
 

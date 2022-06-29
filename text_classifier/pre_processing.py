@@ -19,7 +19,7 @@ def extract_date(path):
     return article_date.date()
 
 
-def add_clean_article_to_db(filename):
+def add_clean_article_to_db(filename, content):
     try:
         source_path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", filename)
         pre_processed_file_path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "cleaned_articles", filename)
@@ -28,6 +28,8 @@ def add_clean_article_to_db(filename):
                       "pre_processed_file_path": pre_processed_file_path,
                       "filename": filename,
                       "extraction_date": extract_date(filename),
+                      "paper": "",
+                      "article_content": content,
                       "user_classification": "",
                       "model_classification": False,
                       "used_in_classifier": False
@@ -46,7 +48,7 @@ def clean_articles():
                 article = article_file.read()
                 cleaned = clean_text(article.replace("\n", ""))
                 save_cleaned_article(file, cleaned)
-                add_clean_article_to_db(file)
+                add_clean_article_to_db(file, article)
                 print("saved to db:", file)
     print("Clean all articles")
 

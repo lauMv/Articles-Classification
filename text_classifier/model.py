@@ -1,39 +1,57 @@
+import datetime
+import pickle
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
 from repository import article_db
 from repository import classifier_db
 
-class Model():
+
+def flags_words(list_docs):
+    flags = []
+
+    def count_words(article):
+        cant = 0
+        for word in article.split(' '):
+            if word in classifier_db.get_conflict_word():
+                cant = cant + 1
+            if word in classifier_db.get_save_words():
+                cant = cant - 1
+        return cant
+
+    for article in list_docs:
+        flags.append(count_words(article))
+    return flags
+
+
+class Model:
 
     def __init__(self):
         self.clf = LogisticRegression()
         self.vectorizer = CountVectorizer(encoding='utf-8', min_df=0.1, max_features=634)
-        self.flags = []
         self.accuracy = 0
         self.precision = 0
         self.recall = 0
         self.f1 = 0
+        self.version = 0
 
-    def fit_transform(self, pre_process_docs):
-        pre_process_docs = self.vectorizer.transform(pre_process_docs)
-        return pre_process_docs
+    def initial_function(self, docs, extra):
+        if extra:
+            self.vectorizer = self.vectorizer.fit(docs, flags_words(docs))
+        else:
+            self.vectorizer = self.vectorizer.fit(docs)
+        doc_vec = self.vectorizer.transform(docs)
+        model = self.vectorizer
+        return model, doc_vec.toarray()
 
-    def fit(self, pre_processes_docs, pre_processes_docs_class):
-        # if not self.flags:
-        #     self.vectorizer.fit(pre_processes_docs)
-        # else:
-        #     self.vectorizer.fit(pre_processes_docs, self.flags)
-        #
-        # pre_processes_docs_vec = self.fit_transform(pre_processes_docs)
-        # self.clf.fit(pre_processes_docs_vec.toarray(), pre_processes_docs_class)
-        pre_processes_docs = self.vectorizer.fit_transform(pre_processes_docs)
-        self.clf.fit(pre_processes_docs, pre_processes_docs_class)
+    def fit(self, doc_vec, docs_class):
+        model = self.clf.fit(doc_vec, docs_class)
+        return model
 
-    def predict(self, pre_processes_docs_vec):
-        new_pre_processes_docs_predicted_class = self.clf.predict(pre_processes_docs_vec)
-        return new_pre_processes_docs_predicted_class
 
+    def predict(self, doc_vec):
+        doc_vec = self.vectorizer.transform(doc_vec)
+        return self.clf.predict(doc_vec)
 
     def eval_model(self, expected_val, predicted_val):
         self.accuracy = accuracy_score(expected_val, predicted_val)
@@ -46,38 +64,35 @@ class Model():
         print('recall del clasificador - version 1 : {0:.2f}'.format(self.recall))
         print('f1 del clasificador - version 1 : {0:.2f}'.format(self.f1))
 
-
-    def save_model_to_db(self):
+    def update_eval_model_to_db(self):
         classifier = {
-            "version": "",
-            "model_path": "",
             "model_accuracy": self.accuracy,
             "model_precision": self.precision,
             "model_recall": self.recall,
             "model_f1": self.f1,
-            "creation_date": "",
-            "is_in_use": False
+            "is_in_use": True
         }
-        classifier_db.create(classifier)
+        classifier_db.update(self.version)
 
-def train_model():
-    non_conflict_articles = article_db.get_by_user_classification('False')
-    conflict_articles = article_db.get_by_user_classification('True')
 
-    # pre_processes_docs, pre_processes_docs_vect = test_model()
-    # predicted = predict_articles(model, pre_processes_docs)
-    # expected = list(0 for elem in range(0, 35)) + list(1 for elem in range(0, 35))
-    # model.eval_model(expected, predicted)
+def train_model(version, conflict_words, x_train, y_train):
+    model = Model()
+    docs_class = [0 for elem in range(0, len(x_train))] + [0 for elem in range(0, len(y_train))]
+    doc_vec = model.fit(x_train + y_train, docs_class, True, conflict_words)
+    predicted_class = model.predict(doc_vec)
+    model.eval_model(docs_class, predicted_class)
+    classifier = {
+        "version": version + 1,
+        "model_path": "classifiers/",
+        "model_accuracy": model.accuracy,
+        "model_precision": model.precision,
+        "model_recall": model.recall,
+        "model_f1": model.f1,
+        "creation_date": datetime.date.today(),
+        "is_in_use": True}
+    classifier_db.create(model)
+    with open('classifiers/model{0}.pkl'.format(version+1), 'wb') as f:
+        pickle.dump(model, f)
 
-#
-# def get_articles_by_name(filename)
-#     def test_model():
-#         pre_processes_docs = get_articles("test_articles", "buenos")
-#         pre_processes_docs_class = [0 for article in pre_processes_docs]
-#         pre_processes_conflicts_docs = get_articles("test_articles", "malos")
-#         pre_processes_conflicts_docs_class = [1 for article in pre_processes_docs]
-#
-#         pre_processes_docs = pre_processes_docs + pre_processes_conflicts_docs
-#         pre_processes_docs_class = pre_processes_docs_class + pre_processes_conflicts_docs_class
-#         return pre_processes_docs, pre_processes_docs_class
-#
+# if __name__ == '__main__':
+#     M = Model()

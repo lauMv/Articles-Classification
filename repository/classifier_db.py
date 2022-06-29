@@ -27,6 +27,14 @@ def get_all():
     return _execute("SELECT * FROM Classifier", return_entity=False)
 
 
+def get_conflict_word():
+    pass
+
+
+def get_save_words():
+    pass
+
+
 def get(id):
     return _execute("SELECT * FROM Classifier WHERE id = {}".format(id), return_entity=True)
 

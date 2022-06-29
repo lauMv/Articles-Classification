@@ -1,119 +1,96 @@
 # This Python file uses the following encoding: utf-8
-
-from repository import article_db
-
-from text_classifier.model import Model
+import pickle
+from datetime import datetime
+from repository import article_db, classifier_db
 import os
 
-
-def execute():
-    print("clasificando...")
-    model = Model()
-    train_model(model)
-    data = [article for article in os.listdir(
-        os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "cleaned_articles"))]
-    predicted = predict_articles(model, data)
-    print(len(predicted))
+from text_classifier.model import Model
 
 
-def get_articles(folder, folder_type):
-    articles = []
-    files = os.listdir(os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), folder, folder_type))
-    path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), folder, folder_type, "")
-    for file in files:
-        with open(path + file, "r", encoding="utf-8", errors="ignore") as article_file:
-            articles.append(article_file.read())
-    return articles
+class Classifier:
 
+    def __init__(self):
+        self.model = Model()
 
-def upload_files_to_set():
-    pre_processes_docs = get_articles("articulos_pre_clasificados", "buenos_limpios")
-    pre_processes_docs = pre_processes_docs + get_articles("articulos_pre_clasificados", "malos_limpios")
-    pre_processes_docs_class = list(0 for elen in range(0, 35)) + list(1 for elem in range(0, 35))
+    def train_model_local(self, version, conflict_words, x_train, y_train, test_docs, test_docs_class):
+        mod, doc_vec = self.model.initial_function(x_train, conflict_words)
+        self.model.vectorizer = mod
+        mod = self.model.fit(doc_vec, y_train)
+        self.model.clf = mod
+        mod = self.model.fit(test_docs, test_docs_class)
+        self.model.clf = mod
+        predicted = self.model.predict(test_docs, test_docs_class, False, conflict_words)
+        self.model.eval_model(test_docs_class, predicted)
+        classifier = {
+            "version": version + 1,
+            "model_path": "classifiers/",
+            "model_accuracy": self.model.accuracy,
+            "model_precision": self.model.precision,
+            "model_recall": self.model.recall,
+            "model_f1": self.model.f1,
+            "creation_date": datetime.date.today(),
+            "is_in_use": True}
+        classifier_db.create(self.model)
+        print("clasificador entrenado satisfactoriamente: ")
+        with open('classifiers/model{0}.pkl'.format(version+1), 'wb') as f:
+            pickle.dump(self.model, f)
 
-    new_pre_processes_docs = get_articles("test_articles", "buenos")
-    new_pre_processes_docs = new_pre_processes_docs + get_articles("test_articles", "malos")
-    new_pre_processes_docs_predicted_class = list(0 for elem in range(0, 35)) + list(1 for elem in range(0, 35))
+    def train_model(self, version, conflict_words):
+        x_train = article_db.get_by_user_classification(False)
+        y_train = article_db.get_by_user_classification(True)
+        docs_class = [0 for elem in range(0, len(x_train))] + [0 for elem in range(0, len(y_train))]
+        doc_vec = self.model.fit(x_train + y_train, docs_class, True, conflict_words)
+        predicted_class = self.model.predict(doc_vec)
+        self.model.eval_model(docs_class, predicted_class)
+        classifier = {
+            "version": version + 1,
+            "model_path": "classifiers/",
+            "model_accuracy": self.model.accuracy,
+            "model_precision": self.model.precision,
+            "model_recall": self.model.recall,
+            "model_f1": self.model.f1,
+            "creation_date": datetime.date.today(),
+            "is_in_use": True}
+        classifier_db.create(self.model)
+        print("Clasificador entrenado satisfactoriamente: ")
+        with open('classifiers/model{0}.pkl'.format(version+1), 'wb') as f:
+            pickle.dump(self.model, f)
 
-    return pre_processes_docs, pre_processes_docs_class, new_pre_processes_docs, new_pre_processes_docs_predicted_class
+    def predict(self, doc_file):
+        doc_vec = self.model.fit(doc_file)
+        return self.predict(doc_vec)
 
+    def evaluate(self, expected, predicted):
+        print(self.model.eval_model(expected, predicted))
 
-conflict_words = ["caso", "denuncia","huelga","emergencia","delitos","conflicto","crisis",
-    "sufrir","difícil","presidio","violaciones","rechazó","auditorías","bloqueo","vulnerando",
-    "ilegales","advierten","injusticias","crítica","traición","convocó","incumplimiento",
-    "declarar" ,"reportó","crímenes","destrucción","paro","detención","paralización","alertó",
-    "movilizaciones","protesta","fraude","violencia","amenaza","agresiones","robar","enfrentar",
-    "riesgo","caída","proceso","contrabando","afectar","dañar","gasto","multas","problemas"]
-save_words = ["garantizó","legales","iniciativa","afluencia","superar","reconocimiento",
-"compromiso","gracias","dialogar","apoyo","agradeció","voluntarios","esfuerzo","brigadas","convenio",
-"cuidados","desinteresado","responsable","inauguración","bonos","impulsar","destacado","preservar",
-"gratuitas","capacitó","derecho","reforzar","campaña","ayudarán","conmemora","operativos",
-"feliz","priorizar","recaudaciones","contribuciones","mejora","estima","celebró","satisfacer",
-"tecnología","cumplir","desarrollo","homenaje","seguridad","beneficio","participación","aprendió"]
+    def save_model_classification(self, predicted, data):
 
+        def save_classification_db(filename, classification):
+            source_file_path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", filename)
+            id = article_db.get_id(source_file_path)
+            try:
+                if classification.astype(int) == 1:
+                    update = {
+                        "model_classification": True}
+                    article_db.update(update, id)
+                    print("Update:", source_file_path)
+            except:
+                print("no guardo")
+                pass
 
-def count_words(article):
-    cant = 0
-    for word in article.split(' '):
-        if word in conflict_words:
-            cant = cant + 1
-        if word in save_words:
-            cant = cant - 1
-    return cant
+        article_classification = [(data[i], predicted[i]) for i in
+                                  range(0, len(data))]
+        for article in article_classification:
+            print(article[0], article[1])
+            save_classification_db(article[0], article[1])
 
-
-def get_flags(pre_processes_docs):
-    flags = []
-    for article in pre_processes_docs:
-        flags.append(count_words(article))
-    return flags
-
-
-def train_model(model):
-    train_docs, train_docs_class, new_docs, new_docs_class = upload_files_to_set()
-
-    model.vectorizer.fit(train_docs, get_flags(train_docs))
-    pre_processes_docs_vectors = model.vectorizer.transform(train_docs)
-    model.clf.fit(pre_processes_docs_vectors.toarray(), train_docs_class)
-    # model.flags = get_flags(train_docs)
-    # model.fit(train_docs, train_docs_class)
-    # vec = model.fit_transform(train_docs)
-    # model.fit(vec.toarray(), train_docs_class)
-
-    new_docs_vec = model.vectorizer.transform(new_docs)
-    new_docs_predicted_class = model.clf.predict(new_docs_vec)
-    #
-    # vec2 = model.fit_transform(new_docs)
-    # model.predict(vec2)
-    # model.eval_model(new_docs_class, vec2)
-    print("clasificador entrenado")
-
-
-def predict_articles(model, new_docs):
-    new_docs = model.fit_transform(new_docs)
-    classification = model.predict(new_docs)
-    article_classification = [(new_docs[i], classification[i]) for i in range(0,len(new_docs))]
-    # new_docs_vectors = model.vectorizer.transform(new_docs)
-    # new_docs_predicted_class = model.clf.predict(new_docs_vectors)
-    # article_classification = [(new_docs[i], new_docs_predicted_class[i]) for i in
-    #                           range(0, len(new_docs))]
-    for article in article_classification:
-        print(article[0], article[1])
-        save_classification_db(article[0], article[1])
-    print('classification saved on DB')
-    return classification
-
-
-def save_classification_db(filename, classification):
-    source_file_path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA"), "articles", filename)
-    id = article_db.get_id(source_file_path)
-    try:
-        if classification.astype(int) == 1:
-            update = {
-                           "model_classification": True}
-            article_db.update(update, id)
-            print("Update:", source_file_path)
-    except:
-        print("no guardo")
+    def print_eval(self):
+        print('accurancy: ', self.model.accuracy)
+        print('precision: ', self.model.precision)
+        print('reca;;: ', self.model.recall)
+        print('f1: ', self.model.f1)
         pass
 
+
+if __name__ == '__main__':
+    classifier = Classifier()

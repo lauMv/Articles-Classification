@@ -6,6 +6,8 @@ from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 
+from repository import article_db
+
 LOS_TIEMPOS = "Los Tiempos"
 OPINION = "Opinion"
 LA_RAZON = "La Razon"
@@ -59,7 +61,7 @@ def __extract_los_tiempos(page):
         regex_match = date_find.search(link)
         date_str = str(regex_match.group('date'))
         article_title = (date_str.replace(" ", "") + " " + title_article)
-        article_title = __remove_punctuation(article_title)
+        article_title = __remove_punctuation(article_title) + ".txt"
         return article_title
 
     def build_validation_function_for_los_tiempos():
@@ -78,7 +80,7 @@ def __extract_los_tiempos(page):
             article_page = BeautifulSoup(response.text, "html.parser")
             article_div = article_page.body.find_all(name="p", attrs={"class": "rtejustify"})
             title_article = article_page.title.text
-            file_name = __get_file_name_los_tiempos(link, title_article) + ".txt"
+            file_name = __get_file_name_los_tiempos(link, title_article)
             article_text = [article.get_text().strip() for article in article_div]
             __download_article(file_name, article_text)
         print("Done")
@@ -99,7 +101,7 @@ def __extract_opinion(page):
         regex_match = opinion_pattern.search(link)
         article_date = str(regex_match.group('date'))
         article_title = (article_date.replace(" ", "") + " " + title_article)
-        article_title = __remove_punctuation(article_title)
+        article_title = __remove_punctuation(article_title) + ".txt"
         return article_title
 
     def build_validation_function_for_opinion():
@@ -118,7 +120,7 @@ def __extract_opinion(page):
             article_page = BeautifulSoup(response.text, "html.parser")
             article_div = article_page.body.find_all(name="p", attrs={})
             title_article = article_page.title.text
-            file_name = __get_file_name_opinion(link, title_article) + ".txt"
+            file_name = __get_file_name_opinion(link, title_article)
             article_text = [article.get_text().strip() for article in article_div]
             if not os.path.exists(file_name):
                 __download_article(file_name, article_text)
@@ -145,7 +147,7 @@ def __extract_la_razon(page):
         date_str = regex_match.group('date')
         date_str.replace(" ", "")
         article_title = (date_str.replace('/', '') + " " + title_article)
-        article_title = __remove_punctuation(article_title)
+        article_title = __remove_punctuation(article_title) + ".txt"
         return article_title
 
     def build_validation_function_for_la_razon():
@@ -163,9 +165,12 @@ def __extract_la_razon(page):
             response = requests.get(link)
             article_page = BeautifulSoup(response.text, "html.parser")
             article_div = article_page.body.find_all(name="div", attrs={"class": "article-body"})
-            article_text = [article.get_text().strip() for article in article_div]
+            article_text = ""
+            for article in article_div:
+                if article.get_text().strip() not in article_text:
+                    article_text = article.get_text().strip()
             title_article = article_page.title.text
-            file_name = __get_file_name_la_razon(link, title_article) + ".txt"
+            file_name = __get_file_name_la_razon(link, title_article)
             if not os.path.exists(file_name):
                 __download_article(file_name, article_text)
         print("Done")
