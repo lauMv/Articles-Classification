@@ -27,21 +27,23 @@ def get_all():
     return _execute("SELECT * FROM Classifier", return_entity=False)
 
 
-def get_conflict_word():
-    pass
+def get_cant_classifier():
+    return _execute("SELECT count(*) as count FROM Classifier", return_entity=False)
 
 
-def get_save_words():
-    pass
+def get(version):
+    return _execute("SELECT * FROM Classifier WHERE id = {}".format(version), return_entity=True)
 
 
-def get(id):
-    return _execute("SELECT * FROM Classifier WHERE id = {}".format(id), return_entity=True)
+def get_use_classifier():
+    classifier = _execute("SELECT * FROM Classifier WHERE is_in_use = 'TRUE'", return_entity=True)
+    version = classifier[0].get("version")
+    return version
 
 
 def create(classifier):
-    id = classifier.get("id")
-    query = r"SELECT count(*) AS count FROM Classifier WHERE id = '{0}'".format(id)
+    version = classifier.get("version")
+    query = r"SELECT count(*) AS count FROM Classifier WHERE version = '{0}'".format(version)
     count = _execute(query, return_entity=False)
 
     if count[0]["count"] > 0:
@@ -54,8 +56,25 @@ def create(classifier):
     return {}
 
 
-def update(classifier, id):
-    query = "SELECT count(*) AS count FROM Classifier WHERE id = '{}'".format(id)
+def update_state(version):
+    query = "SELECT count(*) AS count FROM Classifier WHERE version = '{}'".format(version)
+    count = _execute(query, return_entity=False)
+
+    if count[0]["count"] == 0:
+        return
+    classifier = {
+        'version': version,
+        'is_in_use': 'FALSE'
+    }
+    values = ["'{}'".format(value) for value in classifier.values()]
+    update_values = ", ".join("{} = {}".format(key, value) for key, value in zip(classifier.keys(), values))
+    _execute("UPDATE Classifier SET {} WHERE version = '{}'".format(update_values, version))
+    return {}
+
+
+def update(classifier):
+    version = classifier.get('version')
+    query = "SELECT count(*) AS count FROM Classifier WHERE version = '{}'".format(version)
     count = _execute(query, return_entity=False)
 
     if count[0]["count"] == 0:
@@ -63,7 +82,7 @@ def update(classifier, id):
 
     values = ["'{}'".format(value) for value in classifier.values()]
     update_values = ", ".join("{} = {}".format(key, value) for key, value in zip(classifier.keys(), values))
-    _execute("UPDATE Classifier SET {} WHERE id = '{}'".format(update_values, id))
+    _execute("UPDATE Classifier SET {} WHERE version = '{}'".format(update_values, version))
     return {}
 
 

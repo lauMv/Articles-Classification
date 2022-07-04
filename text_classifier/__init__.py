@@ -9,11 +9,10 @@ from .test_classifier import execute_ as execute_classifier
 
 
 def main():
-    # init_db()
-    # init_classifier_db()
-    # execute_extraction()
-    # execute_preprocessing()
-    # execute_classifier()
+    init_db()
+    init_classifier_db()
+    execute_extraction()
+    execute_preprocessing()
     execute_predictor()
 
 

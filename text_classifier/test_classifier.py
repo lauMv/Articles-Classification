@@ -1,9 +1,12 @@
+import re
+
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
 import pickle
 from joblib import dump, load
 import os
+from datetime import datetime
 
 
 
@@ -12,24 +15,23 @@ from repository import article_db
 
 
 def set_data():
-    pre_processes_docs = [article for article in os.listdir(os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") +
-                                                                         "articulos_pre_clasificados" + "\\" +
-                                                                         "buenos_limpios"))]
+    pre_processes_docs = [article for article in os.listdir(
+        os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "articulos_pre_clasificados" + "\\" + "buenos_limpios"))]
     pre_processes_conflicts_docs = [article for article in os.listdir(
-        os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "articulos_pre_clasificados" + "\\"
-                     + "malos_limpios"))]
+        os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "articulos_pre_clasificados" + "\\" + "malos_limpios"))]
 
-    clasificacion_doc_procesados = [0 for article in pre_processes_docs] + [1 for article in
-                                                                            pre_processes_conflicts_docs]
+    clasificacion_doc_procesados = [0 for article in range(0, len(pre_processes_docs))] + [1 for article in
+                                                                            range(0, len(pre_processes_conflicts_docs))]
     lista_documeentos_procesados = pre_processes_docs + pre_processes_conflicts_docs
 
     new_pre_processes_docs = [article for article in os.listdir(
         os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "test_articles" + "\\" + "buenos"))]
-    new_pre_processes_docs = new_pre_processes_docs + [article for article in os.listdir(
+    new_pre_processes_conflicts_docs = [article for article in os.listdir(
         os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "test_articles" + "\\" + "malos"))]
 
-    expected = [0 for elem in range(0, 35)] + [1 for elem in range(0, 35)]
-
+    expected = [0 for elem in range(0, len(new_pre_processes_docs))] + [1 for elem in
+                                                                        range(0, len(new_pre_processes_conflicts_docs))]
+    new_pre_processes_docs = new_pre_processes_docs + new_pre_processes_conflicts_docs
     return lista_documeentos_procesados, clasificacion_doc_procesados, new_pre_processes_docs, expected
 
 
@@ -75,7 +77,7 @@ def get_flags(pre_processes_docs):
     return flags
 
 
-def save_classification_in_db(article_classification, predicted):
+def save_classification_in_db(article_classification):
     def save_classification_db(filename, classification):
         try:
             if classification.astype(int) == 1:
@@ -93,13 +95,6 @@ def save_classification_in_db(article_classification, predicted):
     pass
 
 
-
-
-     # def load_classifier_to_count_vectorizer(self, version_cl):
-     #     loaded_model = pickle.load(open("classifiers/count_vectorizer.pickle.dat", "rb"))
-     #     return loaded_model
-     #     # use example # loaded_count_vectors  #loaded_model.transform(pre_processes_docs)
-     #
 
 
 
@@ -141,14 +136,23 @@ def train(lista_documeentos_procesados, clasificacion_doc_procesados, new_pre_pr
 
     print('Clasificando los Documentos descargados:')
 
-    data = [article for article in os.listdir(
-     os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "cleaned_articles"))]
+    def get_date_title(filename):
+        date = filename.split()[0]
+        return date
 
+    path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "cleaned_articles")
+
+    today = datetime.today().strftime('%Y%m%d')
+    today_str = str(today).replace(" ", "")
+    # for article in os.listdir(path):
+    #     if get_date_title(article) == today_str:
+    #         data.append(article)
+    data = [article for article in os.listdir(path) if get_date_title(article) == today_str]
     new_vecs = count_vectorizer.transform(data)
     new_doc_class = clf.predict(new_vecs)
 
     article_classification = [(data[i], new_doc_class[i]) for i in range(0, len(data))]
-    save_classification_in_db(article_classification, new_doc_class)
+    save_classification_in_db(article_classification)
 
 
 

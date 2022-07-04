@@ -1,20 +1,41 @@
 import os
+import pickle
+from datetime import datetime
+
+from repository import classifier_db
 from .classifier import Classifier
+from .model import train_model
+
+
+path = os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "cleaned_articles")
+
+
+def get_date_title(filename):
+    date = filename.split()[0]
+    return date
 
 
 def execute():
-    classifier = Classifier()
-    print("clasificando...")
+    print("entrenando clasificador...")
     train_docs, train_docs_class, test_docs, test_docs_class = upload_files_to_set()
-    classifier.train_model_local('0', False, train_docs, train_docs_class, test_docs, test_docs_class)
-    print("evaluando modelo")
-    predicted = classifier.predict(test_docs)
-    classifier.evaluate(test_docs_class, predicted)
-    classifier.print_eval()
-    data = [article for article in os.listdir(
-        os.path.join(os.getenv("TEXT_CLASSIFIER_DATA") + "cleaned_articles"))]
-    classifier.predict(data)
+    train_model(False, train_docs, train_docs_class,test_docs, test_docs_class)
+    print("cargando el modelo")
+    loaded_model = load_classifier()
+    loaded_model.show_metricts()
+    today = datetime.today().strftime('%Y%m%d')
+    today_str = str(today).replace(" ", "")
+    data = [article for article in os.listdir(path) if get_date_title(article) == today_str]
+    print("cant de articulos", len(data))
+    predicted = loaded_model.predict(data)
+    loaded_model.save_model_classification(predicted, data)
     print(len(predicted))
+
+
+def load_classifier():
+    version = classifier_db.get_use_classifier()
+    classifier_name = './text_classifier/classifiers/model_{0}.pkl'.format(version)
+    loaded_model = pickle.load(open(classifier_name, "rb"))
+    return loaded_model
 
 
 def get_articles(folder, folder_type):
